@@ -25,7 +25,6 @@ class GroceryTracker:
             )
         """)
         
-        # Create sequence for auto-incrementing ID
         self.conn.execute("""
             CREATE SEQUENCE IF NOT EXISTS item_id_seq START 1
         """)
@@ -96,7 +95,6 @@ class GroceryTracker:
         if item_name:
             sns.lineplot(data=df, x='purchase_date', y='price', marker='o', linewidth=2.5)
         else:
-            # Plot multiple items
             for item in df['item_name'].unique():
                 item_df = df[df['item_name'] == item]
                 sns.lineplot(data=item_df, x='purchase_date', y='price', 
