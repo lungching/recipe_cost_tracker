@@ -16,10 +16,10 @@ class TestGroceryTracker(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures before each test method."""
-        # Create a temporary database file
-        self.temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
-        self.temp_db.close()
-        self.db_path = self.temp_db.name
+        # Create a temporary database file path (don't create the file yet)
+        temp_fd, self.db_path = tempfile.mkstemp(suffix='.db')
+        os.close(temp_fd)  # Close the file descriptor
+        os.remove(self.db_path)  # Remove the empty file so DuckDB can create it
         self.tracker = GroceryTracker(self.db_path)
         
     def tearDown(self):
@@ -64,7 +64,9 @@ class TestGroceryTracker(unittest.TestCase):
         
         df = self.tracker.get_all_items()
         self.assertEqual(len(df), 1)
-        self.assertEqual(df.iloc[0]['purchase_date'], test_date)
+        # Convert to date for comparison since DuckDB may return Timestamp
+        actual_date = pd.to_datetime(df.iloc[0]['purchase_date']).date()
+        self.assertEqual(actual_date, test_date)
     
     def test_add_multiple_items(self):
         """Test adding multiple items."""
@@ -87,7 +89,8 @@ class TestGroceryTracker(unittest.TestCase):
         self.tracker.add_item("Item3", 3.00, purchase_date=date(2024, 1, 10))
         
         df = self.tracker.get_all_items()
-        dates = df['purchase_date'].tolist()
+        # Convert to dates for comparison
+        dates = [pd.to_datetime(d).date() for d in df['purchase_date'].tolist()]
         self.assertEqual(dates[0], date(2024, 1, 15))
         self.assertEqual(dates[1], date(2024, 1, 10))
         self.assertEqual(dates[2], date(2024, 1, 1))
@@ -148,7 +151,7 @@ class TestGroceryTracker(unittest.TestCase):
         """Test deleting an item."""
         self.tracker.add_item("Milk", 3.99)
         df = self.tracker.get_all_items()
-        item_id = df.iloc[0]['id']
+        item_id = int(df.iloc[0]['id'])  # Convert numpy int to Python int
         
         self.tracker.delete_item(item_id)
         df_after = self.tracker.get_all_items()
@@ -161,7 +164,7 @@ class TestGroceryTracker(unittest.TestCase):
         self.tracker.add_item("Eggs", 4.99)
         
         df = self.tracker.get_all_items()
-        item_id = df.iloc[0]['id']
+        item_id = int(df.iloc[0]['id'])  # Convert numpy int to Python int
         
         self.tracker.delete_item(item_id)
         df_after = self.tracker.get_all_items()
@@ -266,9 +269,9 @@ class TestGroceryTrackerEdgeCases(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
-        self.temp_db.close()
-        self.db_path = self.temp_db.name
+        temp_fd, self.db_path = tempfile.mkstemp(suffix='.db')
+        os.close(temp_fd)
+        os.remove(self.db_path)  # Remove the empty file
         self.tracker = GroceryTracker(self.db_path)
     
     def tearDown(self):
