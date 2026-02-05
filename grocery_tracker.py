@@ -19,6 +19,8 @@ class GroceryTracker:
                 id INTEGER PRIMARY KEY,
                 item_name VARCHAR NOT NULL,
                 price DECIMAL(10, 2) NOT NULL,
+                quantity DECIMAL(10, 2),
+                unit VARCHAR,
                 store VARCHAR,
                 purchase_date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -29,17 +31,18 @@ class GroceryTracker:
             CREATE SEQUENCE IF NOT EXISTS item_id_seq START 1
         """)
     
-    def add_item(self, item_name, price, store=None, purchase_date=None):
+    def add_item(self, item_name, price, quantity=None, unit=None, store=None, purchase_date=None):
         """Add a new grocery item to the database."""
         if purchase_date is None:
             purchase_date = datetime.now().date()
         
         self.conn.execute("""
-            INSERT INTO grocery_items (id, item_name, price, store, purchase_date)
-            VALUES (nextval('item_id_seq'), ?, ?, ?, ?)
-        """, [item_name, price, store, purchase_date])
+            INSERT INTO grocery_items (id, item_name, price, quantity, unit, store, purchase_date)
+            VALUES (nextval('item_id_seq'), ?, ?, ?, ?, ?, ?)
+        """, [item_name, price, quantity, unit, store, purchase_date])
         
-        print(f"✓ Added: {item_name} - ${price:.2f}")
+        quantity_str = f" ({quantity} {unit})" if quantity and unit else ""
+        print(f"✓ Added: {item_name}{quantity_str} - ${price:.2f}")
     
     def get_all_items(self):
         """Get all items from the database."""
@@ -65,6 +68,7 @@ class GroceryTracker:
                 MIN(price) as min_price,
                 MAX(price) as max_price,
                 AVG(price) as avg_price,
+                ROUND(AVG(price / NULLIF(quantity, 0)), 4) as avg_price_per_unit,
                 MAX(purchase_date) as last_purchase
             FROM grocery_items
             GROUP BY item_name
@@ -182,13 +186,13 @@ if __name__ == "__main__":
     tracker = GroceryTracker()
     
     # Add some sample items
-    tracker.add_item("Milk", 3.99, "Walmart", "2024-01-01")
-    tracker.add_item("Milk", 4.29, "Target", "2024-01-15")
-    tracker.add_item("Milk", 3.89, "Walmart", "2024-02-01")
-    tracker.add_item("Bread", 2.49, "Walmart", "2024-01-01")
-    tracker.add_item("Bread", 2.99, "Target", "2024-01-15")
-    tracker.add_item("Eggs", 4.99, "Walmart", "2024-01-01")
-    tracker.add_item("Eggs", 5.49, "Target", "2024-01-15")
+    tracker.add_item("Milk", 3.99, quantity=1, unit="gallon", store="Walmart", purchase_date="2024-01-01")
+    tracker.add_item("Milk", 4.29, quantity=1, unit="gallon", store="Target", purchase_date="2024-01-15")
+    tracker.add_item("Milk", 3.89, quantity=1, unit="gallon", store="Walmart", purchase_date="2024-02-01")
+    tracker.add_item("Bread", 2.49, quantity=24, unit="oz", store="Walmart", purchase_date="2024-01-01")
+    tracker.add_item("Bread", 2.99, quantity=24, unit="oz", store="Target", purchase_date="2024-01-15")
+    tracker.add_item("Eggs", 4.99, quantity=12, unit="count", store="Walmart", purchase_date="2024-01-01")
+    tracker.add_item("Eggs", 5.49, quantity=12, unit="count", store="Target", purchase_date="2024-01-15")
     
     # Display summary
     print("\n=== Price Summary ===")

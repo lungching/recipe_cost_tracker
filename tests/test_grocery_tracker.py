@@ -57,6 +57,15 @@ class TestGroceryTracker(unittest.TestCase):
         self.assertEqual(len(df), 1)
         self.assertEqual(df.iloc[0]['store'], "Walmart")
     
+    def test_add_item_with_quantity_and_unit(self):
+        """Test adding an item with quantity and unit."""
+        self.tracker.add_item("Milk", 3.99, quantity=1, unit="gallon", store="Walmart")
+        
+        df = self.tracker.get_all_items()
+        self.assertEqual(len(df), 1)
+        self.assertEqual(float(df.iloc[0]['quantity']), 1.0)
+        self.assertEqual(df.iloc[0]['unit'], "gallon")
+    
     def test_add_item_with_date(self):
         """Test adding an item with a specific date."""
         test_date = date(2024, 1, 15)
@@ -122,9 +131,9 @@ class TestGroceryTracker(unittest.TestCase):
     
     def test_get_price_summary(self):
         """Test getting price summary statistics."""
-        self.tracker.add_item("Milk", 3.99, purchase_date=date(2024, 1, 1))
-        self.tracker.add_item("Milk", 4.29, purchase_date=date(2024, 1, 15))
-        self.tracker.add_item("Milk", 3.89, purchase_date=date(2024, 2, 1))
+        self.tracker.add_item("Milk", 3.99, quantity=1, unit="gallon", purchase_date=date(2024, 1, 1))
+        self.tracker.add_item("Milk", 4.29, quantity=1, unit="gallon", purchase_date=date(2024, 1, 15))
+        self.tracker.add_item("Milk", 3.89, quantity=1, unit="gallon", purchase_date=date(2024, 2, 1))
         
         summary = self.tracker.get_price_summary()
         self.assertEqual(len(summary), 1)
@@ -135,6 +144,7 @@ class TestGroceryTracker(unittest.TestCase):
         self.assertEqual(float(milk_summary['min_price']), 3.89)
         self.assertEqual(float(milk_summary['max_price']), 4.29)
         self.assertAlmostEqual(float(milk_summary['avg_price']), 4.056667, places=2)
+        self.assertAlmostEqual(float(milk_summary['avg_price_per_unit']), 4.056667, places=2)
     
     def test_get_price_summary_multiple_items(self):
         """Test price summary with multiple items."""
@@ -298,6 +308,13 @@ class TestGroceryTrackerEdgeCases(unittest.TestCase):
         self.tracker.add_item("Free Sample", 0.00)
         df = self.tracker.get_all_items()
         self.assertEqual(float(df.iloc[0]['price']), 0.00)
+    
+    def test_add_item_with_fractional_quantity(self):
+        """Test adding an item with fractional quantity."""
+        self.tracker.add_item("Cheese", 5.99, quantity=0.5, unit="lb")
+        df = self.tracker.get_all_items()
+        self.assertEqual(float(df.iloc[0]['quantity']), 0.5)
+        self.assertEqual(df.iloc[0]['unit'], "lb")
     
     def test_add_item_with_high_precision_price(self):
         """Test adding an item with high precision price."""
