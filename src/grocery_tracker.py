@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 class GroceryTracker:
-    def __init__(self, db_path='grocery_tracker.db'):
+    def __init__(self, db_path='data/grocery_tracker.db'):
         """Initialize the grocery tracker with a DuckDB database."""
         self.db_path = db_path
         self.conn = duckdb.connect(db_path)

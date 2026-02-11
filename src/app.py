@@ -15,7 +15,7 @@ st.set_page_config(
 # Initialize the tracker
 @st.cache_resource
 def get_tracker():
-    return GroceryTracker('grocery_tracker.db')
+    return GroceryTracker('data/grocery_tracker.db')
 
 tracker = get_tracker()
 
