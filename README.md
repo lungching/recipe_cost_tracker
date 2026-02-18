@@ -69,6 +69,7 @@ The project uses:
 - `pytest` for testing (configured in `pyproject.toml`)
 - `src/` layout for clean imports
 - DuckDB for database storage
+- Claude Code
 
 ## Project Structure
 ```
